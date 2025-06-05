@@ -1,36 +1,84 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" type="text/css">
-  <link rel="stylesheet" href="https://pingendo.com/assets/bootstrap/bootstrap-4.0.0-alpha.6.css" type="text/css"> </head>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>To-Do List</title>
+<style>
+body {font-family: Arial, sans-serif; margin: 2em;}
+.container {max-width: 600px; margin: auto;}
+ul {list-style: none; padding: 0;}
+li {display: flex; align-items: center; margin-bottom: 0.5em;}
+li span {flex-grow: 1; margin-left: 0.5em;}
+li.done span {text-decoration: line-through; color: #777;}
+button.delete {margin-left: 0.5em;}
+</style>
+</head>
 <body>
-  <div class="py-5">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-6">
-          <form class="">
-            <div class="form-group"> <label>Email address</label> <input type="email" class="form-control" placeholder="Enter email"> </div>
-            <div class="form-group"> <label>Password</label> <input type="password" class="form-control" placeholder="Password"> </div> <button type="submit" class="btn btn-primary">Login</button> </form>
-        </div>
-        <div class="col-md-6"><img class="center-block img-fluid" src="https://maps.googleapis.com/maps/api/staticmap?key=AIzaSyDW8nO9JhT_pEjebobq9pgUF2cEp0EUb1I&amp;center=New+York+City&amp;zoom=12&amp;size=640x480&amp;sensor=false"></div>
-      </div>
-    </div>
-  </div>
-  <div class="py-5">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="embed-responsive embed-responsive-4by3"> <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/i__1Z5a9Sak?autoplay=0" allowfullscreen=""> </iframe> </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"></script>
-  <script src="https://pingendo.com/assets/bootstrap/bootstrap-4.0.0-alpha.6.min.js"></script>
-</body>
+<div class="container">
+<h1>To-Do List</h1>
+<input id="new-task" type="text" placeholder="Add new task" />
+<button id="add-btn">Add</button>
+<ul id="task-list"></ul>
+</div>
+<script>
+var tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+var list = document.getElementById('task-list');
+var input = document.getElementById('new-task');
 
+function save() {
+  localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+function render() {
+  list.innerHTML = '';
+  tasks.forEach(function(task, index) {
+    var li = document.createElement('li');
+    li.className = task.done ? 'done' : '';
+
+    var checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = task.done;
+    checkbox.addEventListener('change', function() {
+      tasks[index].done = checkbox.checked;
+      save();
+      render();
+    });
+
+    var span = document.createElement('span');
+    span.textContent = task.text;
+
+    var btn = document.createElement('button');
+    btn.textContent = 'Delete';
+    btn.className = 'delete';
+    btn.addEventListener('click', function() {
+      tasks.splice(index, 1);
+      save();
+      render();
+    });
+
+    li.appendChild(checkbox);
+    li.appendChild(span);
+    li.appendChild(btn);
+    list.appendChild(li);
+  });
+}
+
+function addTask() {
+  var text = input.value.trim();
+  if (!text) return;
+  tasks.push({ text: text, done: false });
+  input.value = '';
+  save();
+  render();
+}
+
+document.getElementById('add-btn').addEventListener('click', addTask);
+input.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') addTask();
+});
+
+render();
+</script>
+</body>
 </html>
