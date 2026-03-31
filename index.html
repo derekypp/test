@@ -28,9 +28,114 @@
       </div>
     </div>
   </div>
+  <div class="py-5" id="voice-section">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-8 offset-md-2 text-center">
+          <h3><i class="fa fa-microphone"></i> Voice Input</h3>
+          <p class="text-muted">Press and hold the button (or hold <kbd>Space</kbd>) to speak. Release to stop.</p>
+          <textarea id="voice-output" class="form-control" rows="5" placeholder="Your speech will appear here..." readonly></textarea>
+          <button id="voice-btn" class="btn btn-danger btn-lg mt-3" style="border-radius: 50%; width: 80px; height: 80px;">
+            <i class="fa fa-microphone fa-2x" id="voice-icon"></i>
+          </button>
+          <p id="voice-status" class="mt-2 text-muted">Ready</p>
+        </div>
+      </div>
+    </div>
+  </div>
   <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"></script>
   <script src="https://pingendo.com/assets/bootstrap/bootstrap-4.0.0-alpha.6.min.js"></script>
+  <script>
+    (function() {
+      var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        document.getElementById('voice-status').textContent = 'Speech recognition not supported in this browser.';
+        document.getElementById('voice-btn').disabled = true;
+        return;
+      }
+
+      var recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'zh-TW';
+
+      var btn = document.getElementById('voice-btn');
+      var icon = document.getElementById('voice-icon');
+      var output = document.getElementById('voice-output');
+      var status = document.getElementById('voice-status');
+      var isRecording = false;
+      var finalTranscript = output.value;
+
+      function startRecording() {
+        if (isRecording) return;
+        isRecording = true;
+        finalTranscript = output.value;
+        recognition.start();
+        btn.classList.remove('btn-danger');
+        btn.classList.add('btn-success');
+        icon.classList.add('fa-spin');
+        status.textContent = 'Listening...';
+      }
+
+      function stopRecording() {
+        if (!isRecording) return;
+        isRecording = false;
+        recognition.stop();
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-danger');
+        icon.classList.remove('fa-spin');
+        status.textContent = 'Ready';
+      }
+
+      recognition.onresult = function(event) {
+        var interim = '';
+        for (var i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interim += event.results[i][0].transcript;
+          }
+        }
+        output.value = finalTranscript + interim;
+      };
+
+      recognition.onerror = function(event) {
+        status.textContent = 'Error: ' + event.error;
+        stopRecording();
+      };
+
+      recognition.onend = function() {
+        if (isRecording) {
+          recognition.start();
+        }
+      };
+
+      // Button press and hold
+      btn.addEventListener('mousedown', function(e) { e.preventDefault(); startRecording(); });
+      btn.addEventListener('mouseup', stopRecording);
+      btn.addEventListener('mouseleave', stopRecording);
+      btn.addEventListener('touchstart', function(e) { e.preventDefault(); startRecording(); });
+      btn.addEventListener('touchend', stopRecording);
+
+      // Spacebar hold
+      var spaceHeld = false;
+      document.addEventListener('keydown', function(e) {
+        if (e.code === 'Space' && !spaceHeld && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          spaceHeld = true;
+          startRecording();
+        }
+      });
+      document.addEventListener('keyup', function(e) {
+        if (e.code === 'Space' && spaceHeld) {
+          e.preventDefault();
+          spaceHeld = false;
+          stopRecording();
+        }
+      });
+    })();
+  </script>
 </body>
 
 </html>
