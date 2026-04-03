@@ -1,36 +1,404 @@
-<html>
+<!DOCTYPE html>
+<html lang="zh-Hant">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" type="text/css">
-  <link rel="stylesheet" href="https://pingendo.com/assets/bootstrap/bootstrap-4.0.0-alpha.6.css" type="text/css"> </head>
+  <title>@darkseoking Threads 貼文整理</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #101010;
+      color: #f5f5f5;
+      line-height: 1.6;
+    }
+    .container { max-width: 680px; margin: 0 auto; padding: 16px; }
+
+    /* Header */
+    .profile-header {
+      text-align: center;
+      padding: 32px 16px;
+      border-bottom: 1px solid #333;
+      margin-bottom: 24px;
+    }
+    .profile-header .avatar {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 12px;
+      font-size: 32px; font-weight: bold; color: #fff;
+    }
+    .profile-header h1 { font-size: 22px; margin-bottom: 4px; }
+    .profile-header .handle { color: #999; font-size: 14px; margin-bottom: 8px; }
+    .profile-header .bio { color: #ccc; font-size: 14px; max-width: 400px; margin: 0 auto; }
+
+    /* Category Nav */
+    .category-nav {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      justify-content: center;
+      margin-bottom: 24px;
+      padding: 0 8px;
+    }
+    .category-nav button {
+      background: #222;
+      color: #ccc;
+      border: 1px solid #444;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .category-nav button:hover,
+    .category-nav button.active {
+      background: #f5f5f5;
+      color: #101010;
+      border-color: #f5f5f5;
+    }
+
+    /* Post Card */
+    .post-card {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+    .post-card:hover { border-color: #555; }
+    .post-card .post-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .post-card .post-date {
+      color: #888;
+      font-size: 13px;
+    }
+    .post-card .post-category {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    .cat-seo { background: #2d1f3d; color: #b388ff; }
+    .cat-ai { background: #1a2f1a; color: #81c784; }
+    .cat-tools { background: #1a2a3d; color: #64b5f6; }
+    .cat-market { background: #3d2d1a; color: #ffb74d; }
+
+    .post-card .post-content {
+      font-size: 15px;
+      line-height: 1.75;
+      color: #e0e0e0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .post-card .post-link {
+      display: inline-block;
+      margin-top: 12px;
+      color: #64b5f6;
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .post-card .post-link:hover { text-decoration: underline; }
+
+    /* Section Title */
+    .section-title {
+      font-size: 16px;
+      color: #999;
+      margin: 28px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title i { color: #666; }
+
+    /* Stats */
+    .stats-bar {
+      display: flex; gap: 24px; justify-content: center;
+      padding: 12px 0 24px;
+      color: #888;
+      font-size: 13px;
+    }
+    .stats-bar span { display: flex; align-items: center; gap: 6px; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      color: #555;
+      font-size: 12px;
+      padding: 32px 16px;
+      border-top: 1px solid #222;
+      margin-top: 24px;
+    }
+  </style>
+</head>
 
 <body>
-  <div class="py-5">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-6">
-          <form class="">
-            <div class="form-group"> <label>Email address</label> <input type="email" class="form-control" placeholder="Enter email"> </div>
-            <div class="form-group"> <label>Password</label> <input type="password" class="form-control" placeholder="Password"> </div> <button type="submit" class="btn btn-primary">Login</button> </form>
-        </div>
-        <div class="col-md-6"><img class="center-block img-fluid" src="https://maps.googleapis.com/maps/api/staticmap?key=AIzaSyDW8nO9JhT_pEjebobq9pgUF2cEp0EUb1I&amp;center=New+York+City&amp;zoom=12&amp;size=640x480&amp;sensor=false"></div>
+  <div class="container">
+
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <div class="avatar">AK</div>
+      <h1>AK / Kimbe</h1>
+      <div class="handle">@darkseoking</div>
+      <div class="bio">SEO / AI Tools / Black Hat SEO / AI Content Generation</div>
+      <div class="stats-bar">
+        <span><i class="fa-solid fa-file-lines"></i> 14 篇貼文已整理</span>
+        <span><i class="fa-solid fa-tags"></i> 4 個分類</span>
       </div>
     </div>
-  </div>
-  <div class="py-5">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="embed-responsive embed-responsive-4by3"> <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/i__1Z5a9Sak?autoplay=0" allowfullscreen=""> </iframe> </div>
-        </div>
-      </div>
+
+    <!-- Category Filter -->
+    <div class="category-nav">
+      <button class="active" onclick="filterPosts('all')">全部</button>
+      <button onclick="filterPosts('seo')"><i class="fa-solid fa-magnifying-glass"></i> SEO 實戰</button>
+      <button onclick="filterPosts('ai')"><i class="fa-solid fa-robot"></i> AI 模型</button>
+      <button onclick="filterPosts('tools')"><i class="fa-solid fa-wrench"></i> 工具分享</button>
+      <button onclick="filterPosts('market')"><i class="fa-solid fa-chart-line"></i> 市場觀察</button>
     </div>
+
+    <!-- ============================================ -->
+    <!-- SEO 實戰 -->
+    <!-- ============================================ -->
+    <div class="section-title"><i class="fa-solid fa-magnifying-glass"></i> SEO 實戰與項目</div>
+
+    <div class="post-card" data-cat="seo">
+      <div class="post-meta">
+        <span class="post-date">2025-02-20</span>
+        <span class="post-category cat-seo">SEO 實戰</span>
+      </div>
+      <div class="post-content">【成人網站關鍵詞排名項目 - 詳細說明】
+
+■ 項目概述
+這個項目主要就是排名一大堆成人網站關鍵詞，然後將這些流量導向廣告聯盟網路。用戶打開頁面看不到成人內容，而是直接被導向廣告聯盟。這不是主要收入來源，是博弈項目之外的副業。
+
+■ 核心方法（4 步驟）
+1. 購買過期域名（Expired Domains）：挑選有既存權重和反向連結的過期域名，這些域名在 Google 眼中已有一定信任度
+2. AI 生成內容：用 AI 工具大量生成與成人關鍵詞相關的頁面內容，填充到這些域名上
+3. 欺騙 Google 排名：利用域名的既有權重 + AI 內容，快速在 Google 上獲得大量成人關鍵詞的排名
+4. 流量變現：用戶搜尋成人關鍵詞點入後，頁面上沒有成人內容，而是直接跳轉到廣告聯盟（Ad Network），透過廣告聯盟的 CPA/CPM 賺取收入
+
+■ 收入與成本
+- 收入：近一個月大約賺了 $7,500 美金（約 24 萬台幣）
+- 成本：初始投入不到 15,000 台幣（主要是域名費用和 AI API 費用）
+- 利潤率極高，因為過期域名便宜，AI 內容生成成本低
+
+■ 與博弈項目對比
+- 博弈項目：域名要求更嚴格（需要更高權重的域名），內容規範更高，整體成本更高
+- 成人項目：域名要求較低，成本門檻低很多，適合 SEO 新手入門研究
+
+■ 合法性說明
+只要選詞避開 CSAM（兒童性虐待素材）類別就合法。頁面本身不展示成人內容，僅利用成人關鍵詞的搜尋流量導向廣告。
+
+■ 作者態度
+- 這是副業，不是主要收入
+- 願意公開分享方法論
+- 明確表示「不要來跟我要現成流程或代碼」，鼓勵自己研究測試</div>
+      <a class="post-link" href="https://www.threads.com/@darkseoking/post/DGTbAogTOKv" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看原文</a>
+    </div>
+
+    <div class="post-card" data-cat="seo">
+      <div class="post-meta">
+        <span class="post-date">2025-03 (約第35天)</span>
+        <span class="post-category cat-seo">SEO 實戰</span>
+      </div>
+      <div class="post-content">博弈黑帽SEO代理挑戰 - 第35天
+
+距離目標還差16萬美金，挑戰快完成了。最近更新變慢主要有兩個原因：1. 在搞其他項目 2. 思考這個帳號的價值。
+
+原本的目標是展示實力，順便尋找品牌合作，但兩個月都沒找到有趣的品牌。
+
+台灣SEO市場一堆低端工作室收月費1-5萬台幣，做的事情很基本，效果很差。從下週開始挑戰更新改成每週一次，並推出「低端SEO廠商淘汰計畫」，教大家如何用低成本做更好的SEO。</div>
+      <a class="post-link" href="https://www.threads.com/@darkseoking/post/DHcsCq-TP-p" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看原文</a>
+    </div>
+
+    <div class="post-card" data-cat="seo">
+      <div class="post-meta">
+        <span class="post-date">2025 (深夜提醒)</span>
+        <span class="post-category cat-seo">SEO 實戰</span>
+      </div>
+      <div class="post-content">深夜提醒 - 看到很多人最近用 Gemini 3 生成 SEO 文章，但得注意的是 Gemini 早就針對旗下 AI 生產的內容植入 SynthID 浮水印。
+
+所以這類內容生成以後，Google 可以精準識別 AI 生成的文章，新站或沒有既有排名的站可能直接不被爬取或收錄。
+
+建議：使用多個不同的小眾 AI 工具，並多次改寫文本來打亂文本特徵。</div>
+      <a class="post-link" href="https://www.threads.com/@darkseoking/post/DRfWQaIExTC" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看原文</a>
+    </div>
+
+    <div class="post-card" data-cat="seo">
+      <div class="post-meta">
+        <span class="post-date">2026 (近期)</span>
+        <span class="post-category cat-seo">SEO 實戰</span>
+      </div>
+      <div class="post-content">為此我重新做了一批站來測試，策略改成「用 Gemini 3.0 分析架構，交給 Kimi 2.5 寫作」，結果收錄跟排名瞬間全回來了。
+
+顯然 Google 對包含 SynthID 的新站只要有包含 AI 內容就有非常嚴格的流量限制。
+
+但有趣的是，Bing 完全不吃這套，反而超愛 Gemini 3.0 的文章，那 20 幾個在 Google 摔跤的站，有好幾個在 Bing 的月流量直接衝破 3 萬。
+
+總結目前的實戰結論：
+- 主攻 Google 流量：務必拆分工作流，Gemini 負責分析，Claude 或 Kimi 負責生成內容，避免 SynthID 影響
+- 主攻 Bing 流量：用 Gemini 生成內容目前非常有利
+- 成本控制：「分析端 Gemini + 生成端 Kimi K2.5」是目前兼顧流量與 API 成本的最佳組合</div>
+      <a class="post-link" href="https://www.threads.com/@darkseoking/post/DU95CZGE9pY" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看原文</a>
+    </div>
+
+    <div class="post-card" data-cat="seo">
+      <div class="post-meta">
+        <span class="post-date">2026 (近期)</span>
+        <span class="post-category cat-seo">SEO 實戰</span>
+      </div>
+      <div class="post-content">我覺得差不多，我這個站就是本來做 Google 用到 Gemini 結果 Google 被打死。Bing 上量的差別在於就是 Bing 要求更低且沒有沙盒期。</div>
+      <a class="post-link" href="https://www.threads.com/@darkseoking/post/DVIraclk_Bb" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看原文</a>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- AI 模型與技術 -->
+    <!-- ============================================ -->
+    <div class="section-title"><i class="fa-solid fa-robot"></i> AI 模型與技術</div>
+
+    <div class="post-card" data-cat="ai">
+      <div class="post-meta">
+        <span class="post-date">2026 (近期)</span>
+        <span class="post-category cat-ai">AI 模型</span>
+      </div>
+      <div class="post-content">離譜了，Nano Banana 2 底層居然是還未發表的 Gemini 3.1 Flash，但是他可以實時搜索資料，生成更精準的圖片數據內容。
+
+現在用簡單的 prompt 就可以生成比之前 Nano Banana Pro 更好的圖片，中文字也更細緻。同時因為底層是 3.1 Flash，實測生成一張圖片的 cost 只要 0.1 美金，而之前 Nano Banana Pro 要 0.14 美金。
+
+太扯了，不敢想像 Nano Banana Pro 2 會多強。Google 在圖片生成的領域真的是強大到沒有對手，可惜有 SynthID 浮水印。</div>
+      <a class="post-link" href="https://www.threads.com/@darkseoking/post/DVQF3mlE4Wn" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看原文</a>
+    </div>
+
+    <div class="post-card" data-cat="ai">
+      <div class="post-meta">
+        <span class="post-date">2026 (近期)</span>
+        <span class="post-category cat-ai">AI 模型</span>
+      </div>
+      <div class="post-content">Gemini 3.1 Pro 開始灰度測試了，有些帳號已經被抽中。台灣目前還沒看到甚麼人討論，想知道自己有沒有被抽中，直接用留言區的 prompt 測一下，只要答案出來是正確的就代表你被抽中了。</div>
+      <a class="post-link" href="https://www.threads.com/@darkseoking/post/DU5U7waE_ot" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看原文</a>
+    </div>
+
+    <div class="post-card" data-cat="ai">
+      <div class="post-meta">
+        <span class="post-date">2026 (近期)</span>
+        <span class="post-category cat-ai">AI 模型</span>
+      </div>
+      <div class="post-content">如果算上價格 MiniMax 是真的猛。不比較價格的話 KIMI K2.5 的指令遵守能力還是最強。</div>
+      <a class="post-link" href="https://www.threads.com/@darkseoking/post/DVIHhXbE-bd" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看原文</a>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 工具分享 -->
+    <!-- ============================================ -->
+    <div class="section-title"><i class="fa-solid fa-wrench"></i> 工具分享</div>
+
+    <div class="post-card" data-cat="tools">
+      <div class="post-meta">
+        <span class="post-date">2025 (近期)</span>
+        <span class="post-category cat-tools">工具分享</span>
+      </div>
+      <div class="post-content">分享一個今天發現的好用工具，大家都知道 Notebook LM 可以用 Banana Pro 生成 PPT，不過不能修改字真的是很麻煩的事情。今天在 GitHub 看到一個項目，可以把 Banana Pro 生成的 PPT 轉成可編輯的文字格式。</div>
+      <a class="post-link" href="https://www.threads.com/@darkseoking/post/DSAY9XAkxYN" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看原文</a>
+    </div>
+
+    <div class="post-card" data-cat="tools">
+      <div class="post-meta">
+        <span class="post-date">2025 (近期)</span>
+        <span class="post-category cat-tools">工具分享</span>
+      </div>
+      <div class="post-content">分享了一個開源工具 Antigravity Tool（GitHub），可以將 Google Antigravity 的額度轉成本地 API，搭配 Claude Code 和其他工具使用，可以用到 Claude 4.5 Opus。
+
+提醒：這類工具建議用副帳號測試，避免帳號被封。</div>
+      <a class="post-link" href="https://www.threads.com/@darkseoking/post/DSzbTOOk2L2" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看原文</a>
+    </div>
+
+    <div class="post-card" data-cat="tools">
+      <div class="post-meta">
+        <span class="post-date">2025 (近期)</span>
+        <span class="post-category cat-tools">工具分享</span>
+      </div>
+      <div class="post-content">我剛有分享方法了，轉成 API 以後直接上 Claude Code 用 Agent Skill 了，超爽。</div>
+      <a class="post-link" href="https://www.threads.com/@darkseoking/post/DSzbxeZk0Ve" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看原文</a>
+    </div>
+
+    <div class="post-card" data-cat="tools">
+      <div class="post-meta">
+        <span class="post-date">2025 (近期)</span>
+        <span class="post-category cat-tools">工具分享</span>
+      </div>
+      <div class="post-content">Codex 那個方式有點複雜，這個太友好了，開箱即用。</div>
+      <a class="post-link" href="https://www.threads.com/@darkseoking/post/DSzqlNBk7zc" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看原文</a>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 市場觀察 -->
+    <!-- ============================================ -->
+    <div class="section-title"><i class="fa-solid fa-chart-line"></i> 市場觀察</div>
+
+    <div class="post-card" data-cat="market">
+      <div class="post-meta">
+        <span class="post-date">2026 (近期)</span>
+        <span class="post-category cat-market">市場觀察</span>
+      </div>
+      <div class="post-content">都是一陣一陣的，每次有什麼 AI 工具大改就會突然很多人湧入。Kiro 就會卡，然後被大封號以後就等下次。上次也是 Antigravity 大封殺的時候一堆人湧入 Kiro。</div>
+      <a class="post-link" href="https://www.threads.com/@darkseoking/post/DV3WXw2E8y1" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看原文</a>
+    </div>
+
+    <div class="post-card" data-cat="market">
+      <div class="post-meta">
+        <span class="post-date">2026 (近期)</span>
+        <span class="post-category cat-market">市場觀察</span>
+      </div>
+      <div class="post-content">不然怎麼是雞舍</div>
+      <a class="post-link" href="https://www.threads.com/@darkseoking/post/DVQYrcsk8BD" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> 查看原文</a>
+    </div>
+
+    <footer>
+      <p>資料來源：Threads @darkseoking</p>
+      <p>整理時間：2026-04-03 | 共收集 14 篇公開貼文</p>
+      <p style="margin-top:8px; color:#444;">透過搜尋引擎公開索引資料整理，部分貼文內容為摘要</p>
+    </footer>
   </div>
-  <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"></script>
-  <script src="https://pingendo.com/assets/bootstrap/bootstrap-4.0.0-alpha.6.min.js"></script>
+
+  <script>
+    function filterPosts(cat) {
+      const cards = document.querySelectorAll('.post-card');
+      const buttons = document.querySelectorAll('.category-nav button');
+      const sections = document.querySelectorAll('.section-title');
+
+      buttons.forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      cards.forEach(card => {
+        if (cat === 'all' || card.dataset.cat === cat) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      // Show/hide section titles based on visible cards
+      sections.forEach(section => {
+        let next = section.nextElementSibling;
+        let hasVisible = false;
+        while (next && !next.classList.contains('section-title') && next.tagName !== 'FOOTER') {
+          if (next.classList.contains('post-card') && next.style.display !== 'none') {
+            hasVisible = true;
+          }
+          next = next.nextElementSibling;
+        }
+        section.style.display = hasVisible ? 'flex' : 'none';
+      });
+    }
+  </script>
 </body>
 
 </html>
