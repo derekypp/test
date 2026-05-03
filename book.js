@@ -22,9 +22,14 @@
  *   --query       只查詢車次列表,不訂票
  *   --config      從 JSON 檔讀參數
  *
- * 注意:此程式為模擬器,以隨機邏輯產生車次與訂位結果,不會實際付款。
- *       台鐵官方系統有 CAPTCHA 與 ToS 限制,自動化訂票違反使用條款,
- *       本程式僅作為排程與重試流程的範例。
+ * 環境變數(--query 才會用到):
+ *   TDX_CLIENT_ID      TDX 帳號的 client id
+ *   TDX_CLIENT_SECRET  TDX 帳號的 client secret
+ *   有設定 → 用 TDX 真實時刻表 API;沒設定 → 退回隨機模擬資料。
+ *   免費註冊:https://tdx.transportdata.tw/
+ *
+ * 注意:訂票流程仍為模擬器,以隨機邏輯產生訂位結果、不會實際付款,
+ *       也未串接台鐵 e 訂通(訂票需 CAPTCHA,自動化違反其 ToS)。
  */
 
 const fs = require('fs');
@@ -48,6 +53,103 @@ const TRAIN_TYPES = [
 
 const TICKETS_FILE = path.join(__dirname, 'tickets.json');
 const LOG_FILE     = path.join(__dirname, 'book.log');
+
+// === TDX 真實 API ===
+const TDX_AUTH_URL = 'https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token';
+const TDX_API_BASE = 'https://tdx.transportdata.tw/api/basic/v3/Rail/TRA';
+
+// 車站名稱 → 台鐵車站代碼(TDX StationID)
+const STATION_ID = {
+  '基隆':'0900','七堵':'0930','八堵':'0940','南港':'0980','松山':'0990',
+  '台北':'1000','萬華':'1010','板橋':'1020','樹林':'1040','鶯歌':'1070',
+  '桃園':'1080','中壢':'1100','新竹':'1210','竹南':'1250','苗栗':'3160',
+  '豐原':'3270','台中':'3300','彰化':'3360','員林':'3390','斗六':'3470',
+  '嘉義':'4080','新營':'4150','台南':'4220','岡山':'4290','高雄':'4400',
+  '屏東':'5000','潮州':'5050','枋寮':'5160','台東':'7330','花蓮':'7000',
+  '羅東':'7080','宜蘭':'7110','蘇澳':'7150'
+};
+
+let _tokenCache = null;
+async function getTdxToken() {
+  if (_tokenCache && _tokenCache.expiresAt > Date.now()) return _tokenCache.token;
+  const id = process.env.TDX_CLIENT_ID, secret = process.env.TDX_CLIENT_SECRET;
+  if (!id || !secret) throw new Error('未設定 TDX_CLIENT_ID / TDX_CLIENT_SECRET 環境變數');
+  const body = new URLSearchParams({ grant_type: 'client_credentials', client_id: id, client_secret: secret });
+  const res = await fetch(TDX_AUTH_URL, {
+    method: 'POST', body,
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  });
+  if (!res.ok) throw new Error(`TDX 認證失敗 ${res.status}:${(await res.text()).slice(0,200)}`);
+  const data = await res.json();
+  _tokenCache = { token: data.access_token, expiresAt: Date.now() + (data.expires_in - 60) * 1000 };
+  return data.access_token;
+}
+
+async function tdxFetch(path) {
+  const token = await getTdxToken();
+  const res = await fetch(`${TDX_API_BASE}${path}`, { headers: { Authorization: `Bearer ${token}` }});
+  if (!res.ok) throw new Error(`TDX API ${path} 失敗 ${res.status}:${(await res.text()).slice(0,200)}`);
+  return res.json();
+}
+
+function durationOf(dep, arr) {
+  if (!dep || !arr) return '';
+  const [dh, dm] = dep.split(':').map(Number);
+  const [ah, am] = arr.split(':').map(Number);
+  let mins = (ah * 60 + am) - (dh * 60 + dm);
+  if (mins < 0) mins += 24 * 60;
+  return `${Math.floor(mins/60)}h${mins%60}m`;
+}
+
+// 對號車種:自強 / 太魯閣 / 普悠瑪 / 莒光
+function isReservedType(name) { return /自強|太魯閣|普悠瑪|莒光/.test(name); }
+function fareClassOf(name) {
+  if (/自強|太魯閣|普悠瑪/.test(name)) return 1;
+  if (/莒光/.test(name)) return 2;
+  if (/復興/.test(name)) return 3;
+  return 4;
+}
+
+async function tdxQueryTrains(cfg) {
+  const fromId = STATION_ID[cfg.from], toId = STATION_ID[cfg.to];
+  if (!fromId || !toId) throw new Error(`不支援的車站:${cfg.from} 或 ${cfg.to}`);
+
+  const [tt, fareData] = await Promise.all([
+    tdxFetch(`/DailyTrainTimetable/OD/${fromId}/to/${toId}/${cfg.date}?%24format=JSON`),
+    tdxFetch(`/ODFare/${fromId}/to/${toId}?%24format=JSON`).catch(() => null)
+  ]);
+
+  // 票價:全票對應 FareClass → 價格
+  const fareMap = {};
+  if (fareData) {
+    const fares = (Array.isArray(fareData) ? fareData[0] : fareData)?.Fares || [];
+    for (const f of fares) {
+      if (f.TicketType === 1) fareMap[f.FareClass] = f.Price;
+    }
+  }
+
+  const items = tt.TrainTimetables || [];
+  return items.map(item => {
+    const info = item.TrainInfo || {};
+    const o = item.OriginStopTime || {};
+    const d = item.DestinationStopTime || {};
+    const typeName = info.TrainTypeName?.Zh_tw || info.TrainTypeCode || '';
+    return {
+      no: info.TrainNo,
+      type: typeName,
+      depart: o.DepartureTime,
+      arrive: d.ArrivalTime,
+      duration: durationOf(o.DepartureTime, d.ArrivalTime),
+      fare: fareMap[fareClassOf(typeName)] ?? null
+    };
+  })
+  .filter(t => isReservedType(t.type))
+  .filter(t => cfg.train === 'all'
+            || (cfg.train === '1' && /自強|太魯閣|普悠瑪/.test(t.type))
+            || (cfg.train === '2' && /莒光/.test(t.type)))
+  .filter(t => !cfg.time || t.depart >= cfg.time)
+  .sort((a, b) => a.depart.localeCompare(b.depart));
+}
 
 function parseArgs(argv) {
   const out = {};
@@ -215,19 +317,31 @@ async function run() {
   log(`[測試模式 / 不付款] 任務啟動:${cfg.from} → ${cfg.to}　${cfg.date} ${cfg.time} 之後　1 張`);
 
   if (cfg.query) {
-    const trains = generateTrains(cfg);
-    if (trains.length === 0) { log('查無車次'); process.exit(0); }
-    console.log(`\n${cfg.from} → ${cfg.to}　${cfg.date}　${cfg.time} 之後可訂車次:`);
-    console.log('車次   車種      出發    到達    行車      票價    剩餘座位');
-    console.log('─'.repeat(60));
+    let trains = [], source = 'mock';
+    if (process.env.TDX_CLIENT_ID && process.env.TDX_CLIENT_SECRET) {
+      try {
+        trains = await tdxQueryTrains(cfg);
+        source = 'TDX';
+      } catch (e) {
+        log(`TDX 查詢失敗,退回模擬資料:${e.message}`);
+        trains = generateTrains(cfg);
+      }
+    } else {
+      log('未設定 TDX_CLIENT_ID / TDX_CLIENT_SECRET,使用模擬資料(註冊:https://tdx.transportdata.tw/)');
+      trains = generateTrains(cfg);
+    }
+
+    if (trains.length === 0) { log('查無符合條件的對號車次'); process.exit(0); }
+    console.log(`\n${cfg.from} → ${cfg.to}　${cfg.date}　${cfg.time} 之後可訂對號車　[來源: ${source}]`);
+    console.log('車次   車種        出發    到達    行車      票價');
+    console.log('─'.repeat(58));
     for (const t of trains) {
-      const seat = t.seats === 0 ? '已售完'
-                 : t.seats < 30  ? `剩 ${t.seats} 位`
-                 : `${t.seats} 位`;
+      const fare = t.fare != null ? `$${t.fare}` : '—';
       console.log(
-        `${String(t.no).padEnd(6)} ${t.type.padEnd(8)} ${t.depart}   ${t.arrive}   ${t.duration.padEnd(8)} $${String(t.fare).padEnd(5)} ${seat}`
+        `${String(t.no).padEnd(6)} ${String(t.type).padEnd(10)} ${t.depart}   ${t.arrive}   ${(t.duration || '').padEnd(8)} ${fare}`
       );
     }
+    if (source === 'TDX') console.log('\n備註:即時剩餘座位請至台鐵官網或 e 訂通 App 查詢。');
     console.log('');
     process.exit(0);
   }
