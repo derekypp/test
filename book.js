@@ -15,6 +15,7 @@
  *   --date        乘車日期 YYYY-MM-DD(必填)
  *   --time        最早出發時間 HH:MM(預設 06:00)
  *   --train       對號車種篩選 1=自強類 2=莒光(預設全部對號車)
+ *   --train-no    指定要訂的車次號碼,例:--train-no 117
  *   --at          排程時間 YYYY-MM-DD HH:MM[:SS](預設立即執行)
  *   --retry       最大重試次數(預設 12)
  *   --interval    重試間隔毫秒(預設 5000)
@@ -73,6 +74,7 @@ function loadConfig(args) {
   cfg.retry       = parseInt(cfg.retry      ?? 12);
   cfg.interval    = parseInt(cfg.interval   ?? 5000);
   cfg.train       = cfg.train ? String(cfg.train) : 'all';
+  cfg.trainNo     = cfg['train-no'] ? String(cfg['train-no']) : (cfg.trainNo ? String(cfg.trainNo) : null);
   return cfg;
 }
 
@@ -94,22 +96,38 @@ function log(msg) {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-function generateTrains(from, to, startTime, filterType) {
+function seededRng(parts) {
+  const s = parts.join('|');
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  let a = h >>> 0;
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = a;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function generateTrains(cfg) {
+  const { from, to, time: startTime, train: filterType, date } = cfg;
+  const rng = seededRng([from, to, date, startTime, filterType]);
   const dist = Math.abs(STATION_KM[to] - STATION_KM[from]);
   const [sh] = startTime.split(':').map(Number);
   const trains = [];
-  let base = 100 + Math.floor(Math.random() * 50);
+  const base = 100 + Math.floor(rng() * 50);
 
   for (let i = 0; i < 18; i++) {
-    const tt = TRAIN_TYPES[Math.floor(Math.random() * TRAIN_TYPES.length)];
+    const tt = TRAIN_TYPES[Math.floor(rng() * TRAIN_TYPES.length)];
     if (filterType !== 'all' && String(tt.id) !== filterType) continue;
     const dh = sh + Math.floor(i / 2);
     if (dh >= 24) break;
-    const dm = Math.floor(Math.random() * 60);
+    const dm = Math.floor(rng() * 60);
     const dur = Math.floor(dist * tt.speed * 0.6) + 10;
     const arr = dh * 60 + dm + dur;
     const fare = Math.max(20, Math.round(dist * tt.rate));
-    const seats = Math.floor(Math.random() * 220);
+    const seats = Math.floor(rng() * 220);
     const fmt = (h, m) => `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
     trains.push({
       no: base + i * 7,
@@ -125,12 +143,19 @@ function generateTrains(from, to, startTime, filterType) {
 }
 
 function attemptBook(cfg) {
-  const trains = generateTrains(cfg.from, cfg.to, cfg.time, cfg.train);
-  const available = trains.filter(t => t.seats >= cfg.passengers);
-  if (available.length === 0) return { ok: false, reason: '無可用車次' };
+  const trains = generateTrains(cfg);
+  let train;
+  if (cfg.trainNo) {
+    train = trains.find(t => String(t.no) === String(cfg.trainNo));
+    if (!train) return { ok: false, reason: `查無 ${cfg.trainNo} 次車` };
+    if (train.seats < 1) return { ok: false, reason: `${train.no}(${train.type}) 已售完`, train };
+  } else {
+    const available = trains.filter(t => t.seats >= 1);
+    if (available.length === 0) return { ok: false, reason: '無可用車次' };
+    train = available[0];
+  }
 
-  // 模擬:首班可訂車次有 60% 機率成功
-  const train = available[0];
+  // 模擬:訂位有 60% 成功(模擬同時段搶票競爭)
   const success = Math.random() < 0.6;
   if (!success) return { ok: false, reason: `${train.no}(${train.type}) 訂位失敗`, train };
 
@@ -190,7 +215,7 @@ async function run() {
   log(`[測試模式 / 不付款] 任務啟動:${cfg.from} → ${cfg.to}　${cfg.date} ${cfg.time} 之後　1 張`);
 
   if (cfg.query) {
-    const trains = generateTrains(cfg.from, cfg.to, cfg.time, cfg.train);
+    const trains = generateTrains(cfg);
     if (trains.length === 0) { log('查無車次'); process.exit(0); }
     console.log(`\n${cfg.from} → ${cfg.to}　${cfg.date}　${cfg.time} 之後可訂車次:`);
     console.log('車次   車種      出發    到達    行車      票價    剩餘座位');
