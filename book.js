@@ -18,6 +18,7 @@
  *   --at          排程時間 YYYY-MM-DD HH:MM[:SS](預設立即執行)
  *   --retry       最大重試次數(預設 12)
  *   --interval    重試間隔毫秒(預設 5000)
+ *   --query       只查詢車次列表,不訂票
  *   --config      從 JSON 檔讀參數
  *
  * 注意:此程式為模擬器,以隨機邏輯產生車次與訂位結果,不會實際付款。
@@ -187,6 +188,24 @@ async function run() {
   }
 
   log(`[測試模式 / 不付款] 任務啟動:${cfg.from} → ${cfg.to}　${cfg.date} ${cfg.time} 之後　1 張`);
+
+  if (cfg.query) {
+    const trains = generateTrains(cfg.from, cfg.to, cfg.time, cfg.train);
+    if (trains.length === 0) { log('查無車次'); process.exit(0); }
+    console.log(`\n${cfg.from} → ${cfg.to}　${cfg.date}　${cfg.time} 之後可訂車次:`);
+    console.log('車次   車種      出發    到達    行車      票價    剩餘座位');
+    console.log('─'.repeat(60));
+    for (const t of trains) {
+      const seat = t.seats === 0 ? '已售完'
+                 : t.seats < 30  ? `剩 ${t.seats} 位`
+                 : `${t.seats} 位`;
+      console.log(
+        `${String(t.no).padEnd(6)} ${t.type.padEnd(8)} ${t.depart}   ${t.arrive}   ${t.duration.padEnd(8)} $${String(t.fare).padEnd(5)} ${seat}`
+      );
+    }
+    console.log('');
+    process.exit(0);
+  }
 
   if (cfg.at) {
     const at = new Date(cfg.at.replace(' ', 'T'));
