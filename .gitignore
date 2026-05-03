@@ -1,0 +1,6 @@
+# book.js 執行產出(本機資料)
+tickets.json
+book.log
+
+# Node
+node_modules/
