@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /**
- * 台鐵訂票 CLI(模擬)
+ * 台鐵訂票 CLI(測試模式 / 模擬)
+ *
+ * 限制:每次只訂 1 張票、不處理付款流程(僅產生訂位代號)。
  *
  * 用法:
- *   node book.js --from 台北 --to 高雄 --date 2026-05-10 --passengers 2
+ *   node book.js --from 台北 --to 高雄 --date 2026-05-10
  *   node book.js --from 台北 --to 花蓮 --date 2026-05-10 --at "2026-05-09 00:00:00"
  *   node book.js --config job.json
  *
@@ -13,13 +15,12 @@
  *   --date        乘車日期 YYYY-MM-DD(必填)
  *   --time        最早出發時間 HH:MM(預設 06:00)
  *   --train       對號車種篩選 1=自強類 2=莒光(預設全部對號車)
- *   --passengers  人數(預設 1)
  *   --at          排程時間 YYYY-MM-DD HH:MM[:SS](預設立即執行)
  *   --retry       最大重試次數(預設 12)
  *   --interval    重試間隔毫秒(預設 5000)
  *   --config      從 JSON 檔讀參數
  *
- * 注意:此程式為模擬器,以隨機邏輯產生車次與訂位結果。
+ * 注意:此程式為模擬器,以隨機邏輯產生車次與訂位結果,不會實際付款。
  *       台鐵官方系統有 CAPTCHA 與 ToS 限制,自動化訂票違反使用條款,
  *       本程式僅作為排程與重試流程的範例。
  */
@@ -67,7 +68,7 @@ function loadConfig(args) {
     delete cfg.config;
   }
   cfg.time        = cfg.time        ?? '06:00';
-  cfg.passengers  = parseInt(cfg.passengers ?? 1);
+  cfg.passengers  = 1;  // 測試模式:每次只訂 1 張
   cfg.retry       = parseInt(cfg.retry      ?? 12);
   cfg.interval    = parseInt(cfg.interval   ?? 5000);
   cfg.train       = cfg.train ? String(cfg.train) : 'all';
@@ -80,7 +81,6 @@ function validate(cfg) {
   if (!cfg.to   || !STATIONS.includes(cfg.to))   errs.push(`to 必填且需為合法車站,例:--to 高雄`);
   if (cfg.from === cfg.to) errs.push('from 與 to 不可相同');
   if (!cfg.date || !/^\d{4}-\d{2}-\d{2}$/.test(cfg.date)) errs.push('date 必填,格式 YYYY-MM-DD');
-  if (cfg.passengers < 1 || cfg.passengers > 6) errs.push('passengers 範圍 1-6');
   if (cfg.train !== 'all' && !['1','2'].includes(cfg.train)) errs.push('train 僅支援對號車種:1=自強類 2=莒光');
   return errs;
 }
@@ -142,8 +142,10 @@ function attemptBook(cfg) {
       to: cfg.to,
       date: cfg.date,
       train: { no: train.no, type: train.type, depart: train.depart, arrive: train.arrive },
-      passengers: cfg.passengers,
-      total: train.fare * cfg.passengers,
+      passengers: 1,
+      fare: train.fare,
+      paid: false,
+      mode: 'test',
       bookedAt: new Date().toISOString()
     }
   };
@@ -184,7 +186,7 @@ async function run() {
     process.exit(1);
   }
 
-  log(`任務啟動:${cfg.from} → ${cfg.to}　${cfg.date} ${cfg.time} 之後　${cfg.passengers} 人`);
+  log(`[測試模式 / 不付款] 任務啟動:${cfg.from} → ${cfg.to}　${cfg.date} ${cfg.time} 之後　1 張`);
 
   if (cfg.at) {
     const at = new Date(cfg.at.replace(' ', 'T'));
@@ -202,7 +204,7 @@ async function run() {
     const r = attemptBook(cfg);
     if (r.ok) {
       saveTicket(r.ticket);
-      log(`訂票成功!訂位代號 ${r.ticket.code}　${r.ticket.train.type} ${r.ticket.train.no} 次　${r.ticket.train.depart}-${r.ticket.train.arrive}　$${r.ticket.total}`);
+      log(`訂位成功 [測試模式 / 未付款]:代號 ${r.ticket.code}　${r.ticket.train.type} ${r.ticket.train.no} 次　${r.ticket.train.depart}-${r.ticket.train.arrive}　票價 $${r.ticket.fare}(請至超商或官網於期限內付款)`);
       process.exit(0);
     }
     log(`失敗:${r.reason}`);
